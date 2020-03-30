@@ -87,22 +87,6 @@ function decodeFilePath(filePath) {
   return `packages/${match[1]}/${match[2]}`;
 }
 
-const importPlugins = {};
-
-function getKey(inputFile) {
-  return `${inputFile.getPackageName()}:${inputFile.getPathInPackage()}`;
-}
-
-function getImportPlugin(inputFile, dependencyManager) {
-  const key = getKey(inputFile);
-  let result = importPlugins[key];
-  if (!result) {
-    importPlugins[key] = new MeteorImportLessPlugin(dependencyManager);
-    result = importPlugins[key];
-  }
-  return result;
-}
-
 // CompileResult is {css, sourceMap}.
 // eslint-disable-next-line no-undef
 class LessCompiler extends MultiFileCachingCompiler {
@@ -139,6 +123,8 @@ class LessCompiler extends MultiFileCachingCompiler {
   };
 
   compileOneFile(inputFile, dependencyManager) {
+    const importPlugin = new MeteorImportLessPlugin(dependencyManager);
+
     const f = new Future();
     let output;
     try {
@@ -146,7 +132,7 @@ class LessCompiler extends MultiFileCachingCompiler {
         inputFile.getContentsAsBuffer().toString('utf8'),
         {
           filename: this.getAbsoluteImportPath(inputFile),
-          plugins: [getImportPlugin(inputFile, dependencyManager)],
+          plugins: [importPlugin],
           javascriptEnabled: true,
           // Generate a source map, and include the source files in the
           // sourcesContent field.  (Note that source files which don't themselves
